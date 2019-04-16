@@ -1,0 +1,4 @@
+pydotplus
+IPython
+Tkinter==8.6
+pymongo
