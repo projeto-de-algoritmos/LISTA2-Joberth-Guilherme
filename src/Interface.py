@@ -1,23 +1,26 @@
 import Tkinter as tk
-import pydotplus as ptp
 from IPython.display import SVG, display
 from PIL import ImageTk, Image
-from connectionDatabse import Connection
+from connectionDatabase import Connection
+from graph import Habilitation
 import random
 
 
 class Application:
+# This class is use for generate the
+# widgets interface in screen
 
     def __init__(self, master=None):
 
+        # Define the height and width from the master frame
         self.heightScreen = master.winfo_screenheight(),
         self.widthScreen = master.winfo_screenwidth(),
 
+        # Container for user input
         self.containerEntry = tk.Frame(master)
         self.containerEntry.pack()
 
-        Connection.connectionDatabase()
-
+        # Label and input for habilitation code
         self.labelCodeCourse = tk.Label(self.containerEntry,
                                         text="Codigo da habilitacao: ")
         self.labelCodeCourse.pack(side=tk.LEFT)
@@ -25,92 +28,75 @@ class Application:
         self.codeCourse["width"] = 30
         self.codeCourse.pack(side=tk.LEFT, padx=10)
 
+        # button for bind the search
         self.buttonCodeCourse = tk.Button(self.containerEntry)
         self.buttonCodeCourse["text"] = "Procurar"
         self.buttonCodeCourse["command"] = self.generateGraph
         self.buttonCodeCourse.pack(side=tk.LEFT)
 
+        # Container where the graph is
         self.containerGraph = tk.Frame(master, bg="white")
         self.containerGraph.pack(pady=20, expand=tk.YES, fill=tk.NONE)
 
     def showGraph(self):
+        # Another container but is special for images
         canvas = tk.Canvas(self.containerGraph,
                            width=self.widthScreen,
                            height=self.heightScreen[0] - 200,
                            bg="white")
-        img = tk.PhotoImage(file="file.png")
+        # Load the photo in variable
+        img = tk.PhotoImage(file="graph.png")
+        # Determine the pre set configurations for image
         canvas.create_image(20,
                             (self.heightScreen[0]) // 6,
                             anchor=tk.NW,
                             image=img)
+        # Adding image to container
         canvas.image = img
+        # Able the container to show in master contatiner
         canvas.pack()
 
     def generateGraph(self):
-
+        # Get habilitation code input
         habilitationCode = self.codeCourse.get()
 
+        # verify if the code is empty and set 0
         if habilitationCode == '':
             habilitationCode = 0
 
+        # Clean all the widget if there is some in screen
         for widget in self.containerGraph.winfo_children():
             widget.destroy()
 
+        # Connection to database and set the colletion used 
         database = Connection.connectionDatabase()
-        collectionDiscipline = database.disciplines
         collectionHabilitation = database['habilitations']
 
-        feedbackCount = collectionHabilitation.find(
-            {'code': int(habilitationCode)}).count()
-        
+        habilitationCode = collectionHabilitation.find(
+                            {'code': int(habilitationCode)})
 
+        # Save the count number documents in query 
+        feedbackCount = habilitationCode.count()
+        
+        # Verify if the result return 0 and show a 
+        # warning mesage
         if feedbackCount == 0:
             self.Warning = tk.Label(self.containerGraph,
                                     text="Nao existe esse codigo para essa habilitacao")
             self.Warning.pack()
         else:
+            # If there is the habilitation code we generate the graph
+            Habilitation(habilitationCode).load_graph()
 
-            edges = []
-            nodes = []
-
-            disciplines = collectionHabilitation.find_one({'code': int(habilitationCode)})
-
-            list_discipline = []
-
-            for discipline in disciplines['disciplines']:
-                list_discipline += discipline.values()[0]
-
-            for discipline in list_discipline:
-                current_dis = collectionDiscipline.find_one({'code': str(discipline)})
-                nodes.append((int(discipline), current_dis['name']))
-                for requirement in current_dis['requirements']:
-
-                    edges.append((int(requirement), int(discipline) ))
-
-            print(nodes)
-            print(edges)
-                    
-                
-            graph = ptp.Dot(graph_type='digraph', rankdir='LR')
-               
-            for e in edges:
-                graph.add_edge(ptp.Edge(e[0], e[1]))
-            for n in nodes:
-                node = ptp.Node(name=n[0], label= n[1], style="filled" )
-                graph.add_node(node)
-            graph.write_png('file.png')
-            
-            
-
+            # Call the function to show the graph in screen
             self.showGraph()
 
         
-
-
 if __name__ == "__main__":
 
     root = tk.Tk()  # Allow the widget be on the table
 
+    # Title and size of screen
     root.title('Trabalho 2 Grafo')
     root.geometry('700x700')
 

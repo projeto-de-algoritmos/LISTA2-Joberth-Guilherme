@@ -1,3 +1,5 @@
 *.pyc
 .vscode
 *.log
+venv
+*.png
