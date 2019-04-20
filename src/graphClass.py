@@ -4,55 +4,67 @@ import pydotplus as ptp
 class Graph:
     def __init__(self, graph):
         self.graph = graph
-        self.adjacentList = defaultdict(list)
     
-    def dfs_recursivo_visita(self, vertice, visitado, ordem):
-
-        visitado.append(vertice)
+    def visited_recursive_dsf(self, vertex, visited, order):
+        
+        visited.append(vertex)
 
         try:
-            self.graph[vertice]
+            self.graph[vertex]
         except KeyError:
-            ordem.append(vertice)
+            order.append(vertex)
             return  
           
-        for vertice_aux in self.graph[vertice]:
-            print('aux')
-            print(vertice_aux)
-            for current_vertice in vertice_aux:
-                if current_vertice not in visitado:
-                    self.dfs_recursivo_visita(current_vertice, visitado, ordem)
-        ordem.insert(0, vertice)
+        for vertex_aux in self.graph[vertex]:
+            if vertex_aux not in visited:
+                    self.visited_recursive_dsf(vertex_aux, visited, order)
+        order.insert(0, vertex)
+
+        '''
+            for current_vertex in vertex_aux:
+                if current_vertex not in visited:
+                    self.visited_recursive_dsf(current_vertex, visited, order)
+        order.insert(0, vertex)'''
         
 
-    def dfs_recursao(self):
-        print(self.graph)
-        visitado = []
-        ordem = []
-        for vertice in self.graph:
-            if vertice not in visitado:
-                self.dfs_recursivo_visita(vertice, visitado, ordem)
-        print('Ordem')
-        ordem.reverse()
+    def topologicalSort(self):
+        visited = []
+        order = []
+
+        for vertex in self.graph:
+            if vertex not in visited:
+                self.visited_recursive_dsf(vertex, visited, order)
+        print('order')
+        order.reverse()
 
         edges = []
 
-        for edge in range(len(ordem) - 1):
-            edges.append((ordem[edge], ordem[edge + 1]))
-
-        print(edges)
-
-        print(ordem)
+        for edge in range(len(order) - 1):
+            edges.append((order[edge], order[edge + 1]))
 
         # create a direct graph horizontal
         graph = ptp.Dot(graph_type='digraph', rankdir='LR')
+
+        print('aqui')
             
         # Adding all edges and nodes in instace of graph
         for e in edges:
-            graph.add_edge(ptp.Edge(str(e[0]), str(e[1])))
-        for n in ordem:
+            graph.add_edge(ptp.Edge(str(e[0]), str(e[1]),color='green'))
+                
+                    
+        for n in order:
             node = ptp.Node(name=str(n), label= str(n), style="filled" )
             graph.add_node(node)
+            
+            try:
+                req_current = self.graph[n]
+            except KeyError:
+                continue
+            
+            for node in req_current:
+                edges.append((n, node))
+                graph.add_edge(ptp.Edge(str(n), str(node)))
+        
 
         # create an png image from the result
         graph.write_png('topological.png')

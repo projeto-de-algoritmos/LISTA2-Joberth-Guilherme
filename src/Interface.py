@@ -111,15 +111,16 @@ class Application:
         '''
         if self.topological == True:
             img = tk.PhotoImage(file="topological.png")
+
         else:
             img = tk.PhotoImage(file="graph.png")
-        
-    
+            
         # Determine the pre set configurations for image
         canvas.create_image(0,
-                            0,
-                            anchor=tk.NW,
-                            image=img)
+                        0,
+                        anchor=tk.NW,
+                        image=img)
+    
         # Adding image to container
         canvas.image = img
 

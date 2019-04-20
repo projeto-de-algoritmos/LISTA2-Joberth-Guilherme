@@ -8,5 +8,5 @@ class Connection:
     @staticmethod
     def connectionDatabase():
         client = MongoClient('mongodb://localhost:27017/')  
-        database = client['teste']
+        database = client['mwscanner']
         return database
