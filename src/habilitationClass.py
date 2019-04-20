@@ -32,7 +32,7 @@ class Habilitation:
         # Add it in node  list with name and code
         # And all the requirement belong it is add in edges from graph connect
         for discipline in list_disciplines:
-            current_dis = collectionDiscipline.find_one({'code': discipline})
+            current_dis = collectionDiscipline.find_one({'code': str(discipline)})
             # print(current_dis)
             if current_dis != None:
 
