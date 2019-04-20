@@ -46,6 +46,12 @@ class Habilitation:
                 else:
                     new_req[-1] = [new_req[-1], req]
 
+
+        if len(new_req) == 1 \
+                and isinstance(new_req[0], list) \
+                and len(new_req[0]) == 1:
+            new_req[0] = new_req[0][0]
+
         return new_req
 
     def get_and_name(self, code, index):
