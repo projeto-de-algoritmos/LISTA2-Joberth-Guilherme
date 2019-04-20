@@ -9,7 +9,48 @@ class Habilitation:
 
     def __init__(self, code):
         self.code = list(code)[0]
-    
+
+    def convert_requirements(self, requirements):
+
+        # A, [B, C] -- A AND B OR C
+        # [A, B], C
+
+        new_req = []
+
+        for req in requirements:
+
+            if isinstance(req, list):
+
+                if len(new_req) < 1:
+                    new_req = req
+                    continue
+
+                first_element = req.pop(0)
+
+                if isinstance(new_req[-1], list):
+                    new_req[-1].append(first_element)
+                else:
+                    new_req[-1] = [new_req[-1], first_element]
+
+                # add the rest
+                for others_req in req:
+                    new_req.append(others_req)
+
+            else:
+
+                if len(new_req) < 1:
+                    new_req.append([req])
+
+                elif isinstance(new_req[-1], list):
+                    new_req[-1].append(req)
+                else:
+                    new_req[-1] = [new_req[-1], req]
+
+        return new_req
+
+    def get_and_name(self, code, index):
+        return code + "_" + str(index)
+
     def load_graph(self):
         # Initiate the disciplines collection
         database = Connection.connectionDatabase()
@@ -32,42 +73,35 @@ class Habilitation:
         # Add it in node  list with name and code
         # And all the requirement belong it is add in edges from graph connect
         for discipline in list_disciplines:
+
             current_dis = collectionDiscipline.find_one({'code': str(discipline)})
-            # print(current_dis)
-            if current_dis != None:
 
-                type_str =False
+            if current_dis is None:
+                nodes.append((str(discipline), str(discipline)))
+                continue
 
-                if len(current_dis['requirements']) > 1:
-                    type_str = True
+            requirements = self.convert_requirements(current_dis['requirements'])
+            code = str(discipline)
+            label = current_dis['name']
+
+            nodes.append((code, label))
+            discipline_relation[code] = []
+
+            for index, requirement in enumerate(requirements):
+
+                if isinstance(requirement, list):
+
+                    and_node_name = self.get_and_name(code, index)
+                    nodes.append((and_node_name, 'E'))
+                    edges.append((and_node_name, code   ))
+
+                    for req in requirement:
+                        edges.append((str(req), and_node_name))
+                        discipline_relation[code].append(str(req))
+
                 else:
-                    nodes.append((int(discipline), current_dis['name']))
-
-                cont = 1
-                for requirement in current_dis['requirements']:
-                    # print(requirement)
-
-                    if type_str:
-                        nodes.append((str(discipline) + str(cont), 'E'))
-                        edges.append((str(discipline) + str(cont), int(discipline)))
-                    
-                    if isinstance(requirement, list):
-                        if cont == 1:
-                            discipline_relation[current_dis['code']] = requirement
-
-                        for single_requirement in requirement:
-                            if type_str:
-                                edges.append((int(single_requirement), str(discipline) + str(cont) ))
-                            else:
-                                edges.append((int(single_requirement), int(discipline) ))
-                    else:
-                        if cont == 1:
-                            discipline_relation[current_dis['code']] = list(requirement)
-
-                        edges.append((int(requirement), int(discipline)))
-                    cont+= 1
-            else:
-                nodes.append((int(discipline), str(discipline)))
+                    edges.append((str(requirement), code))
+                    discipline_relation[code].append(str(requirement))
         
         print(discipline_relation)
         
@@ -81,7 +115,7 @@ class Habilitation:
         for e in edges:
             graph.add_edge(ptp.Edge(e[0], e[1]))
         for n in nodes:
-            node = ptp.Node(name=n[0], label= n[1], style="filled" )
+            node = ptp.Node(name=n[0], label=n[1], style="filled")
             graph.add_node(node)
 
         # create an png image from the result
